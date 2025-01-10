@@ -143,9 +143,9 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 ## Contact Information
 For inquiries or feedback, please contact:
 
-- **Name**: [Your Name]
-- **Email**: [Your Email]
-- **GitHub**: [Your GitHub Profile]
+- **Name**: Darshan Pradeepkumar Chouthayi
+- **Email**: darshanchouthai@gmail.com
+- **GitHub**: darshanchouthai
 
 ---
 
