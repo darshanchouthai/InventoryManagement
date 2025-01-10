@@ -63,7 +63,7 @@ The integrated chatbot provides quick and efficient support. Typing `hi` initiat
 
 1. **Clone the Repository**:
    ```bash
-   git clone <repository_url>
+   git clone (https://github.com/darshanchouthai/InventoryManagement.git)
    cd inventory-management
    ```
 
