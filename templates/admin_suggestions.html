@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suggestions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #f9f9fc, #ffffff);
+            min-height: 100vh;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #4A90E2;
+            color: white;
+            text-align: center;
+            padding: 20px 10px;
+            font-size: 30px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .section {
+            margin: 100px auto 30px auto;
+            max-width: 1200px;
+        }
+
+        .section-title {
+            font-size: 26px;
+            color: #4A90E2;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #4A90E2;
+            padding-bottom: 10px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .item-card {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .item-card h3 {
+            color: #4A90E2;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .item-card p {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .low-stock {
+            color: #E74C3C;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .restock-button {
+            display: block;
+            margin: 10px 0;
+            padding: 10px 15px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .restock-button:hover {
+            background-color: #357ABD;
+            transform: scale(1.05);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #E74C3C;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .back-button:hover {
+            background-color: #C0392B;
+            transform: scale(1.05);
+        }
+
+        #quantity-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        #quantity-modal input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        #quantity-modal button {
+            padding: 10px 15px;
+            background-color: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 48%;
+            margin-right: 4%;
+            box-sizing: border-box;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        #quantity-modal button:hover {
+            background-color: #357ABD;
+        }
+
+        #quantity-modal button:last-child {
+            background-color: #E74C3C;
+            margin-right: 0;
+        }
+
+        #quantity-modal button:last-child:hover {
+            background-color: #C0392B;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            .item-card {
+                padding: 15px;
+            }
+
+            .restock-button {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+
+            #quantity-modal button {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+
+            .back-button {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>Suggestions</header>
+
+    <a href="{{ url_for('admin') }}" class="back-button">Home</a>
+
+    <!-- Most Ordered Section -->
+    <div class="section">
+        <h2 class="section-title">Most Ordered Items</h2>
+        <div class="container">
+            {% for item in most_ordered %}
+            <div class="item-card">
+                <h3>{{ item.name }}</h3>
+                <p><strong>Item ID:</strong> {{ item.item_id }}</p>
+                <p><strong>Category:</strong> {{ item.category }}</p>
+                <p><strong>Total Ordered:</strong> {{ item.total_ordered }}</p>
+                <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Least Ordered Section -->
+    <div class="section">
+        <h2 class="section-title">Least Ordered Items</h2>
+        <div class="container">
+            {% for item in least_ordered %}
+            <div class="item-card">
+                <h3>{{ item.name }}</h3>
+                <p><strong>Item ID:</strong> {{ item.item_id }}</p>
+                <p><strong>Category:</strong> {{ item.category }}</p>
+                <p><strong>Total Ordered:</strong> {{ item.total_ordered }}</p>
+                <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Not Ordered Section -->
+    <div class="section">
+        <h2 class="section-title">Items Not Ordered</h2>
+        <div class="container">
+            {% if not_ordered %}
+                {% for item in not_ordered %}
+                <div class="item-card">
+                    <h3>{{ item.name }}</h3>
+                    <p><strong>Item ID:</strong> {{ item.item_id }}</p>
+                    <p><strong>Category:</strong> {{ item.category }}</p>
+                    <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No items found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Low Stock Section -->
+    <div class="section">
+        <h2 class="section-title">Low Stock Items</h2>
+        <div class="container">
+            {% set low_stock_items = [] %}
+            {% for item in most_ordered + least_ordered + not_ordered %}
+                {% if item.current_stock < 10 %}
+                    {% set _ = low_stock_items.append(item) %}
+                {% endif %}
+            {% endfor %}
+    
+            {% if low_stock_items %}
+                {% for item in low_stock_items %}
+                <div class="item-card">
+                    <h3>{{ item.name }}</h3>
+                    <p><strong>Item ID:</strong> {{ item.item_id }}</p>
+                    <p><strong>Category:</strong> {{ item.category }}</p>
+                    <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
+                    <p class="low-stock">Stock is less</p>
+                    <button class="restock-button" onclick="showQuantityModal('{{ item.item_id }}')">Add Quantity</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No items are understocked.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="modal-overlay"></div>
+    <div id="quantity-modal">
+        <h3>Add Quantity</h3>
+        <form method="POST" action="{{ url_for('admin_suggestions') }}">
+            <input type="hidden" id="item-id-input" name="item_id">
+            <input type="number" id="quantity-input" name="quantity" placeholder="Enter quantity to add" required />
+            <button type="submit">Submit</button>
+            <button type="button" onclick="closeQuantityModal()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+        function showQuantityModal(itemId) {
+            document.getElementById('item-id-input').value = itemId;
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('quantity-modal').style.display = 'block';
+        }
+
+        function closeQuantityModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('quantity-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
