@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import mysql.connector
 from mysql.connector import Error
 import random
-import pymysql
+import pymysql 
 
 
 app = Flask(__name__)
