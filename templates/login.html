@@ -5,118 +5,324 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-image: url('https://images.pexels.com/photos/7130475/pexels-photo-7130475.jpeg?cs=srgb&dl=pexels-codioful-7130475.jpg&fm=jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
         }
+
+        /* Animated background particles */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 100px 100px, 150px 150px, 200px 200px;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
         .container {
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 40px 30px;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 50px 40px;
             text-align: center;
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 350px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            max-width: 400px;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.8s ease-out;
         }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .container:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
         }
-        .container img {
-            width: 100px;
-            height: 100px;
-            margin-bottom: 20px;
+
+        .profile-section {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             object-fit: cover;
-        }
-        h1 {
+            border: 4px solid rgba(255, 255, 255, 0.3);
             margin-bottom: 20px;
-            color: #333;
-            font-size: 1.8em;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
+
+        .profile-image:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        h1 {
+            color: white;
+            font-size: 2.2em;
+            font-weight: 300;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95em;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
         input {
             width: 100%;
-            margin: 12px 0;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        input:focus {
-            border-color: #007BFF;
-            outline: none;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 15px;
+            padding: 18px 20px;
             border: none;
-            border-radius: 8px;
-            background-color: #007BFF;
+            border-radius: 15px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus {
+            outline: none;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        input::placeholder {
+            color: #999;
+            transition: opacity 0.3s ease;
+        }
+
+        input:focus::placeholder {
+            opacity: 0.5;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 18px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
             color: white;
             font-size: 1.1em;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(238, 90, 36, 0.3);
+            position: relative;
+            overflow: hidden;
         }
-        button:hover {
-            background-color: #0056b3;
-            transform: scale(1.02);
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(238, 90, 36, 0.4);
         }
+
+        .login-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
         .register-link {
-            margin-top: 15px;
+            margin-top: 30px;
             font-size: 0.95em;
+            color: rgba(255, 255, 255, 0.8);
         }
+
         .register-link a {
             text-decoration: none;
-            color: #007BFF;
-            font-weight: bold;
+            color: #ffd32a;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
         }
-        .register-link a:hover {
-            text-decoration: underline;
+
+        .register-link a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #ffd32a;
+            transition: width 0.3s ease;
         }
+
+        .register-link a:hover::after {
+            width: 100%;
+        }
+
         .error-message {
-            color: red;
-            font-size: 14px;
-            margin-bottom: 15px;
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 20%, 40%, 60%, 80% { transform: translateX(0); }
+            10%, 30%, 50%, 70% { transform: translateX(-5px); }
+            25%, 45%, 65% { transform: translateX(5px); }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 480px) {
+            .container {
+                padding: 40px 30px;
+                margin: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .profile-image {
+                width: 100px;
+                height: 100px;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Profile Image -->
-        <img src="https://th.bing.com/th?id=OIP.UTUjtK1YQsalaXALH9qUuwHaHZ&w=250&h=249&c=8&rs=1&qlt=90&o=6&dpr=1.3&pid=3.1&rm=2" alt="Default Image">
+        <div class="profile-section">
+            <img src="https://th.bing.com/th?id=OIP.UTUjtK1YQsalaXALH9qUuwHaHZ&w=250&h=249&c=8&rs=1&qlt=90&o=6&dpr=1.3&pid=3.1&rm=2" 
+                 alt="Profile Image" class="profile-image">
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Please sign in to your account</p>
+        </div>
 
-        <h1>Login</h1>
-        
         <!-- Error Message -->
         {% if error %}
         <div class="error-message">{{ error }}</div>
         {% endif %}
 
         <!-- Login Form -->
-        <form method="POST">
-            <input type="text" name="username" placeholder="Enter your Username" required>
-            <input type="password" name="password" placeholder="Enter your Password" required>
-            <button type="submit">Login</button>
+        <form method="POST" id="loginForm">
+            <div class="input-group">
+                <input type="text" name="username" placeholder="Username" required>
+            </div>
+            <div class="input-group">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="login-btn">
+                Sign In
+            </button>
         </form>
 
         <!-- Register Link -->
         <div class="register-link">
-            Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
+            Don't have an account? <a href="{{ url_for('register') }}">Create one</a>
         </div>
     </div>
+
+    <script>
+        // Add loading state when form is submitted
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const btn = this.querySelector('.login-btn');
+            btn.classList.add('loading');
+            btn.textContent = 'Signing In...';
+        });
+
+        // Add input focus animations
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+    </script>
 </body>
 </html>
