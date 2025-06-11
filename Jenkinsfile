@@ -2,10 +2,14 @@ pipeline {
     agent any
 
     environment {
-        // ✅ MODIFIED: Updated Docker Hub username to correct one
-        IMAGE_NAME = 'darshanpchouthayi/inventory-management'  // <-- updated from 'darshanchouthai'
+        // ✅ MODIFIED: Correct Docker Hub username
+        IMAGE_NAME = 'darshanpchouthayi/inventory-management'
         IMAGE_TAG = 'latest'
         DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
+
+        // ✅ ADDED: PythonAnywhere config
+        PYTHONANYWHERE_API_CRED = 'pythonanywhere-token'        // secret text: token
+        PYTHONANYWHERE_LOGIN_CRED = 'pythonanywhere-creds'      // username + password
     }
 
     stages {
@@ -24,26 +28,17 @@ pipeline {
         }
 
         /*
-        // --- The entire Test Stage has been removed ---
-        stage('Run Tests (inside Docker)') {
-            steps {
-                script {
-                    bat """
-                        docker run --rm ^
-                        -v "${pwd()}:/app" ^
-                        -w /app ^
-                        ${IMAGE_NAME}:${IMAGE_TAG} ^
-                        python -m unittest discover -s tests
-                    """
-                }
-            }
-        }
+        // --- Test Stage was removed ---
         */
 
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    withCredentials([usernamePassword(
+                        credentialsId: "${DOCKER_CREDENTIALS_ID}",
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
                         bat """
                             echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
                             docker push ${IMAGE_NAME}:${IMAGE_TAG}
@@ -53,9 +48,19 @@ pipeline {
             }
         }
 
-        stage('Deploy (Optional)') {
+        stage('Deploy to PythonAnywhere') {
             steps {
-                echo 'Deploying Flask App...'
+                script {
+                    withCredentials([
+                        string(credentialsId: "${PYTHONANYWHERE_API_CRED}", variable: 'PA_API_TOKEN'),
+                        usernamePassword(credentialsId: "${PYTHONANYWHERE_LOGIN_CRED}", usernameVariable: 'PA_USER', passwordVariable: 'PA_PASS')
+                    ]) {
+                        bat """
+                            curl -X POST https://www.pythonanywhere.com/api/v0/user/${PA_USER}/webapps/${PA_USER}.pythonanywhere.com/reload/ ^
+                            -H "Authorization: Token ${PA_API_TOKEN}"
+                        """
+                    }
+                }
             }
         }
     }
