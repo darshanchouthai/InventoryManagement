@@ -4,21 +4,20 @@ pipeline {
     environment {
         IMAGE_NAME = 'darshanchouthai/inventory-management'
         IMAGE_TAG = 'latest'
-        DOCKER_CREDENTIALS_ID = 'dockerhub-creds'  // Create this in Jenkins Credentials
+        DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
     }
 
     stages {
         stage('Clone Repo') {
-    steps {
-        git branch: 'main', url: 'https://github.com/darshanchouthai/InventoryManagement.git'
-    }
-}
-
+            steps {
+                git branch: 'main', url: 'https://github.com/darshanchouthai/InventoryManagement.git'
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
         }
@@ -26,9 +25,13 @@ pipeline {
         stage('Run Tests (inside Docker)') {
             steps {
                 script {
-                    docker.image("${IMAGE_NAME}:${IMAGE_TAG}").inside {
-                        sh 'python -m unittest discover -s tests'
-                    }
+                    sh """
+                        docker run --rm \
+                        -v "\$PWD":/app \
+                        -w /app \
+                        ${IMAGE_NAME}:${IMAGE_TAG} \
+                        python -m unittest discover -s tests
+                    """
                 }
             }
         }
@@ -36,8 +39,11 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                            docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        """
                     }
                 }
             }
@@ -46,7 +52,7 @@ pipeline {
         stage('Deploy (Optional)') {
             steps {
                 echo 'Deploying Flask App...'
-                // Example: SSH to remote server and restart container
+                // Example deployment
                 // sh 'ssh user@server "docker pull darshanchouthai/inventory-management && docker-compose up -d"'
             }
         }
