@@ -9,10 +9,11 @@ pipeline {
 
     stages {
         stage('Clone Repo') {
-            steps {
-                git 'https://github.com/darshanchouthai/InventoryManagement.git'
-            }
-        }
+    steps {
+        git branch: 'main', url: 'https://github.com/darshanchouthai/InventoryManagement.git'
+    }
+}
+
 
         stage('Build Docker Image') {
             steps {
