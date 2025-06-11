@@ -689,6 +689,18 @@ def cart():
 
     return render_template('kart.html', cart=cart_items, total=total, stock_error=stock_error)
 
+@app.route('/pull_and_reload', methods=['POST'])
+def pull_and_reload():
+    token = request.headers.get("X-Auth-Token")
+    if token != os.environ.get("CI_CD_TOKEN"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        os.system("cd /home/invmgmt/InventoryManagement && git pull")
+        os.system("touch /var/www/invmgmt_pythonanywhere_com_wsgi.py")  # reload app
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # 6. Logout Route
 @app.route('/logout')

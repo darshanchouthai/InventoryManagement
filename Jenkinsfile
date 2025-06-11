@@ -2,14 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // ✅ MODIFIED: Correct Docker Hub username
         IMAGE_NAME = 'darshanpchouthayi/inventory-management'
         IMAGE_TAG = 'latest'
         DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
 
-        // ✅ ADDED: PythonAnywhere config
-        PYTHONANYWHERE_API_CRED = 'pythonanywhere-token'        // secret text: token
-        PYTHONANYWHERE_LOGIN_CRED = 'pythonanywhere-creds'      // username + password
+        PYTHONANYWHERE_CICD_URL = 'https://invmgmt.pythonanywhere.com/pull_and_reload'
+        PYTHONANYWHERE_CICD_TOKEN = credentials('pythonanywhere-cicd-token') // Jenkins secret text
     }
 
     stages {
@@ -26,10 +24,6 @@ pipeline {
                 }
             }
         }
-
-        /*
-        // --- Test Stage was removed ---
-        */
 
         stage('Push to Docker Hub') {
             steps {
@@ -51,15 +45,10 @@ pipeline {
         stage('Deploy to PythonAnywhere') {
             steps {
                 script {
-                    withCredentials([
-                        string(credentialsId: "${PYTHONANYWHERE_API_CRED}", variable: 'PA_API_TOKEN'),
-                        usernamePassword(credentialsId: "${PYTHONANYWHERE_LOGIN_CRED}", usernameVariable: 'PA_USER', passwordVariable: 'PA_PASS')
-                    ]) {
-                        bat """
-                            curl -X POST https://www.pythonanywhere.com/api/v0/user/${PA_USER}/webapps/${PA_USER}.pythonanywhere.com/reload/ ^
-                            -H "Authorization: Token ${PA_API_TOKEN}"
-                        """
-                    }
+                    bat """
+                        curl -X POST ${PYTHONANYWHERE_CICD_URL} ^
+                        -H "X-Auth-Token: ${PYTHONANYWHERE_CICD_TOKEN}"
+                    """
                 }
             }
         }
@@ -71,10 +60,10 @@ pipeline {
             cleanWs()
         }
         success {
-            echo '✅ Pipeline completed successfully.'
+            echo '✅ CI/CD pipeline completed successfully.'
         }
         failure {
             echo '❌ Pipeline failed.'
         }
     }
-}
+} 
