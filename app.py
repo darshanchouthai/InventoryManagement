@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 import random
 import pymysql
+import os
 
 
 app = Flask(__name__)
@@ -10,13 +11,14 @@ app.secret_key = '41f4cfa3623d79af0b306d17f321d482'  # Replace with a secure key
 
 
 # Database Configuration
+import os
+
 DB_CONFIG = {
     'host': 'localhost',
-    'database': 'InventoryManagementDB',
-    'user': 'root',
-    'password': 'Darshan@2003'
+    'database':  'inventorymanagementDB',  # Default to 'inventorymanagementDB'
+    'user': 'root',  # Default to 'root'
+    'password': 'Darshan@2003'  # Default to 'Darshan@2003'
 }
-
 # --- Helper Function ---
 def get_db_connection():
     """Establish a database connection."""
@@ -696,4 +698,5 @@ def logout():
 
 # --- Run Application ---
 if __name__ == '__main__':
-    app.run(debug=True)
+   app.run(host='0.0.0.0', port=5000, debug=True)
+
