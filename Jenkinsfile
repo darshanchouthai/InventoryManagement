@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'darshanchouthai/inventory-management'
+        // ✅ MODIFIED: Updated Docker Hub username to correct one
+        IMAGE_NAME = 'darshanpchouthayi/inventory-management'  // <-- updated from 'darshanchouthai'
         IMAGE_TAG = 'latest'
         DOCKER_CREDENTIALS_ID = 'dockerhub-creds'
     }
