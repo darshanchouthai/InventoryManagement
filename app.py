@@ -14,11 +14,12 @@ app.secret_key = '41f4cfa3623d79af0b306d17f321d482'  # Replace with a secure key
 import os
 
 DB_CONFIG = {
-    'host': 'localhost',
-    'database':  'inventorymanagementDB',  # Default to 'inventorymanagementDB'
-    'user': 'root',  # Default to 'root'
-    'password': 'Darshan@2003'  # Default to 'Darshan@2003'
+    'host': 'invmgmt.mysql.pythonanywhere-services.com',
+    'database': 'invmgmt$default',
+    'user': 'invmgmt',
+    'password': 'RcbChampions@2025'  # Change to your actual MySQL password
 }
+
 # --- Helper Function ---
 def get_db_connection():
     """Establish a database connection."""
