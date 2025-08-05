@@ -17,10 +17,10 @@ s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 # --- Database Configuration ---
 DB_CONFIG = {
-    'host': 'localhost',
-    'database': 'inventorymanagementdb',
-    'user': 'root',
-    'password': 'Darshan@2003'  # Change to your actual MySQL password
+     'host': 'invmgmt.mysql.pythonanywhere-services.com',
+    'database': 'invmgmt$default',
+    'user': 'invmgmt',
+    'password': 'RcbChampions@2025'  # Change to your actual MySQL password
 }
 
 # --- Email Credentials ---
@@ -871,8 +871,15 @@ def pull_and_reload():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        os.system("cd /home/invmgmt/InventoryManagement && git pull")
-        os.system("touch /var/www/invmgmt_pythonanywhere_com_wsgi.py")  # reload app
+        # Go to your project directory
+        project_path = "/home/invmgmt/InventoryManagement"
+
+        # Discard all local changes EXCEPT venv
+        os.system(f"cd {project_path} && git restore . && git clean -fd && git pull")
+
+        # Reload the app
+        os.system("touch /var/www/invmgmt_pythonanywhere_com_wsgi.py")
+
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
