@@ -3,305 +3,491 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suggestions</title>
+    <title>Admin Suggestions - ProdStore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to bottom, #f9f9fc, #ffffff);
-            min-height: 100vh;
+        :root {
+            --primary-color: #6a5acd;
+            --primary-hover: #5a4bbf;
+            --secondary-color: #2ab7a7;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --warning-color: #f59e0b;
+            
+            --sidebar-bg: #1f2937;
+            --sidebar-text: #d1d5db;
+            --sidebar-text-hover: #ffffff;
+            --sidebar-active-bg: rgba(106, 90, 205, 0.1);
+            
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --background-page: #f8f9fa;
+            --surface-color: #ffffff;
+            --border-color: #e5e7eb;
         }
 
-        header {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-page);
+            color: var(--text-dark);
+            display: flex;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
             position: fixed;
-            top: 0;
             left: 0;
-            width: 100%;
-            background-color: #4A90E2;
-            color: white;
-            text-align: center;
-            padding: 20px 10px;
-            font-size: 30px;
-            font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            top: 0;
+            transition: transform 0.3s ease-in-out;
             z-index: 1000;
         }
 
-        .section {
-            margin: 100px auto 30px auto;
-            max-width: 1200px;
-        }
-
-        .section-title {
-            font-size: 26px;
-            color: #4A90E2;
-            margin-bottom: 20px;
+        .sidebar-header {
+            padding: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
             text-align: center;
-            font-weight: bold;
-            border-bottom: 2px solid #4A90E2;
-            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+        .sidebar-nav {
+            flex-grow: 1;
+            padding: 1rem 0;
         }
 
-        .item-card {
-            background-color: #fff;
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-item a:hover {
+            background-color: var(--sidebar-active-bg);
+            color: var(--sidebar-text-hover);
+        }
+        
+        .nav-item a.active {
+            background-color: var(--sidebar-active-bg);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            transition: margin-left 0.3s ease-in-out;
+        }
+        
+        .main-header-bar {
+            background-color: var(--surface-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header-actions .logout-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            background-color: var(--danger-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .header-actions .logout-button:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .content-body {
+            padding: 2rem;
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .table-container {
+            background-color: var(--surface-color);
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
         }
 
-        .item-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
         }
 
-        .item-card h3 {
-            color: #4A90E2;
-            margin-bottom: 10px;
-            font-size: 20px;
+        th, td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .item-card p {
-            margin: 5px 0;
-            font-size: 16px;
-            color: #555;
+        th {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
         }
-
-        .low-stock {
-            color: #E74C3C;
-            font-weight: bold;
-            margin-top: 10px;
+        
+        td {
+            font-size: 0.95rem;
         }
-
+        
+        .low-stock-flag {
+            color: var(--danger-color);
+            font-weight: 500;
+        }
+        
         .restock-button {
-            display: block;
-            margin: 10px 0;
-            padding: 10px 15px;
-            background-color: #4A90E2;
+            padding: 0.5rem 1rem;
+            background-color: var(--secondary-color);
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
-            text-align: center;
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
         }
-
+        
         .restock-button:hover {
-            background-color: #357ABD;
-            transform: scale(1.05);
+            background-color: #249d8f;
         }
 
-        .back-button {
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Modal Styles */
+        #modal-overlay {
+            display: none;
             position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background-color: #E74C3C;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 16px;
-            text-transform: uppercase;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
             z-index: 1001;
-        }
-
-        .back-button:hover {
-            background-color: #C0392B;
-            transform: scale(1.05);
         }
 
         #quantity-modal {
             display: none;
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            background-color: white;
+            background-color: var(--surface-color);
             border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            padding: 20px;
-            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            z-index: 1002;
             width: 90%;
             max-width: 400px;
         }
-
-        #modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+        
+        #quantity-modal h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
         }
 
         #quantity-modal input {
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 1rem;
         }
-
-        #quantity-modal button {
-            padding: 10px 15px;
-            background-color: #4A90E2;
-            color: white;
+        
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .modal-actions button {
+            padding: 0.6rem 1.2rem;
             border: none;
             border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 14px;
-            width: 48%;
-            margin-right: 4%;
-            box-sizing: border-box;
-            text-align: center;
-            transition: background-color 0.3s ease;
+        }
+        
+        .modal-submit {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .modal-cancel {
+            background-color: var(--border-color);
+            color: var(--text-dark);
         }
 
-        #quantity-modal button:hover {
-            background-color: #357ABD;
+        /* Mobile Responsive */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
         }
-
-        #quantity-modal button:last-child {
-            background-color: #E74C3C;
-            margin-right: 0;
-        }
-
-        #quantity-modal button:last-child:hover {
-            background-color: #C0392B;
+        
+        .menu-toggle svg {
+            width: 24px;
+            height: 24px;
         }
 
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            .sidebar {
+                transform: translateX(-100%);
             }
-
-            .item-card {
-                padding: 15px;
+            .sidebar.open {
+                transform: translateX(0);
             }
-
-            .restock-button {
-                font-size: 12px;
-                padding: 8px 10px;
+            .main-content {
+                margin-left: 0;
+                width: 100%;
             }
-
-            #quantity-modal button {
-                font-size: 12px;
-                padding: 8px 10px;
+            .main-header-bar {
+                padding-left: 4rem;
             }
-
-            .back-button {
-                font-size: 14px;
-                padding: 8px 15px;
+            .menu-toggle {
+                display: block;
             }
         }
     </style>
 </head>
 <body>
-    <header>Suggestions</header>
 
-    <a href="{{ url_for('admin') }}" class="back-button">Home</a>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">ProdStore</div>
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{{ url_for('admin') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 10.707V17.5a1.5 1.5 0 01-1.5 1.5h-3.75a.75.75 0 01-.75-.75V14.5a.5.5 0 00-.5-.5h-1.5a.5.5 0 00-.5.5v3.75a.75.75 0 01-.75.75H4.5A1.5 1.5 0 013 17.5V10.707a1 1 0 01.293-.707l7-7z" clip-rule="evenodd" />
+                        </svg>
+                        Home
+                    </a>
+                    <a href="{{ url_for('admin_list_items') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
+                        Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_orders') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 2A1.5 1.5 0 002 3.5v1.256a1.5 1.5 0 00.5 1.06l7.5 7.5-7.5 7.5A1.5 1.5 0 002 22.044V23.5A1.5 1.5 0 003.5 25h13A1.5 1.5 0 0018 23.5v-1.256a1.5 1.5 0 00-.5-1.06l-7.5-7.5 7.5-7.5A1.5 1.5 0 0018 4.756V3.5A1.5 1.5 0 0016.5 2h-13z" /></svg>
+                        Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_suggestions') }}" class="active">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003 15h14a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
+                        Suggestions
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p style="font-size: 0.8rem; text-align: center; color: var(--text-light);">© 2025 ProdStore</p>
+        </div>
+    </aside>
 
-    <!-- Most Ordered Section -->
-    <div class="section">
-        <h2 class="section-title">Most Ordered Items</h2>
-        <div class="container">
-            {% for item in most_ordered %}
-            <div class="item-card">
-                <h3>{{ item.name }}</h3>
-                <p><strong>Item ID:</strong> {{ item.item_id }}</p>
-                <p><strong>Category:</strong> {{ item.category }}</p>
-                <p><strong>Total Ordered:</strong> {{ item.total_ordered }}</p>
-                <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
+    <button class="menu-toggle" id="menu-toggle">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
+    </button>
+
+    <main class="main-content">
+        <header class="main-header-bar">
+            <div class="header-title">
+                <h1>Suggestions</h1>
             </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Least Ordered Section -->
-    <div class="section">
-        <h2 class="section-title">Least Ordered Items</h2>
-        <div class="container">
-            {% for item in least_ordered %}
-            <div class="item-card">
-                <h3>{{ item.name }}</h3>
-                <p><strong>Item ID:</strong> {{ item.item_id }}</p>
-                <p><strong>Category:</strong> {{ item.category }}</p>
-                <p><strong>Total Ordered:</strong> {{ item.total_ordered }}</p>
-                <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
+            <div class="header-actions">
+                 <a href="{{ url_for('admin') }}" class="logout-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M6 10a.75.75 0 01.75-.75h9.546l-1.048-.943a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 11-1.004-1.114l1.048-.943H6.75A.75.75 0 016 10z" clip-rule="evenodd" /></svg>
+                    Back
+                </a>
             </div>
-            {% endfor %}
-        </div>
-    </div>
+        </header>
 
-    <!-- Not Ordered Section -->
-    <div class="section">
-        <h2 class="section-title">Items Not Ordered</h2>
-        <div class="container">
-            {% if not_ordered %}
-                {% for item in not_ordered %}
-                <div class="item-card">
-                    <h3>{{ item.name }}</h3>
-                    <p><strong>Item ID:</strong> {{ item.item_id }}</p>
-                    <p><strong>Category:</strong> {{ item.category }}</p>
-                    <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
+        <div class="content-body">
+            <!-- Most Ordered Section -->
+            <div class="section">
+                <h2 class="section-title">Most Ordered Items</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Total Ordered</th>
+                                <th>Current Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in most_ordered %}
+                            <tr>
+                                <td>{{ item.item_id }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.category }}</td>
+                                <td>{{ item.total_ordered }}</td>
+                                <td>{{ item.current_stock }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                {% endfor %}
-            {% else %}
-                <p>No items found.</p>
-            {% endif %}
-        </div>
-    </div>
+            </div>
 
-    <!-- Low Stock Section -->
-    <div class="section">
-        <h2 class="section-title">Low Stock Items</h2>
-        <div class="container">
-            {% set low_stock_items = [] %}
-            {% for item in most_ordered + least_ordered + not_ordered %}
-                {% if item.current_stock < 10 %}
-                    {% set _ = low_stock_items.append(item) %}
-                {% endif %}
-            {% endfor %}
-    
-            {% if low_stock_items %}
-                {% for item in low_stock_items %}
-                <div class="item-card">
-                    <h3>{{ item.name }}</h3>
-                    <p><strong>Item ID:</strong> {{ item.item_id }}</p>
-                    <p><strong>Category:</strong> {{ item.category }}</p>
-                    <p><strong>Current Stock:</strong> {{ item.current_stock }}</p>
-                    <p class="low-stock">Stock is less</p>
-                    <button class="restock-button" onclick="showQuantityModal('{{ item.item_id }}')">Add Quantity</button>
+            <!-- Least Ordered Section -->
+            <div class="section">
+                <h2 class="section-title">Least Ordered Items</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Total Ordered</th>
+                                <th>Current Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in least_ordered %}
+                            <tr>
+                                <td>{{ item.item_id }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.category }}</td>
+                                <td>{{ item.total_ordered }}</td>
+                                <td>{{ item.current_stock }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                {% endfor %}
-            {% else %}
-                <p>No items are understocked.</p>
-            {% endif %}
+            </div>
+
+            <!-- Low Stock Section -->
+            <div class="section">
+                <h2 class="section-title">Low Stock Items</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set low_stock_items = [] %}
+                            {% for item in most_ordered + least_ordered + not_ordered %}
+                                {% if item.current_stock < 10 and item not in low_stock_items %}
+                                    {% set _ = low_stock_items.append(item) %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if low_stock_items %}
+                                {% for item in low_stock_items %}
+                                <tr>
+                                    <td>{{ item.item_id }}</td>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td><span class="low-stock-flag">{{ item.current_stock }}</span></td>
+                                    <td><button class="restock-button" onclick="showQuantityModal('{{ item.item_id }}')">Restock</button></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-light);">No items are understocked.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-    </div>
+    </main>
 
     <div id="modal-overlay"></div>
     <div id="quantity-modal">
-        <h3>Add Quantity</h3>
+        <h3>Restock Item</h3>
         <form method="POST" action="{{ url_for('admin_suggestions') }}">
             <input type="hidden" id="item-id-input" name="item_id">
-            <input type="number" id="quantity-input" name="quantity" placeholder="Enter quantity to add" required />
-            <button type="submit">Submit</button>
-            <button type="button" onclick="closeQuantityModal()">Cancel</button>
+            <input type="number" id="quantity-input" name="quantity" placeholder="Enter quantity to add" required min="1" />
+            <div class="modal-actions">
+                <button type="button" class="modal-cancel" onclick="closeQuantityModal()">Cancel</button>
+                <button type="submit" class="modal-submit">Submit</button>
+            </div>
         </form>
     </div>
 
@@ -316,6 +502,10 @@
             document.getElementById('modal-overlay').style.display = 'none';
             document.getElementById('quantity-modal').style.display = 'none';
         }
+        
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
     </script>
 </body>
 </html>

@@ -3,134 +3,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Details</title>
+    <title>Admin Orders - ProdStore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --primary-color: #6a5acd;
+            --primary-hover: #5a4bbf;
+            --secondary-color: #2ab7a7;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --success-color: #22c55e;
+            --success-hover: #16a34a;
+            
+            --sidebar-bg: #1f2937;
+            --sidebar-text: #d1d5db;
+            --sidebar-text-hover: #ffffff;
+            --sidebar-active-bg: rgba(106, 90, 205, 0.1);
+            
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --background-page: #f8f9fa;
+            --surface-color: #ffffff;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background: linear-gradient(to bottom, #eaf4fc, #ffffff);
-            min-height: 100vh;
-            color: #333;
         }
-    
-        header {
-            background-color: #4A90E2;
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-page);
+            color: var(--text-dark);
+            display: flex;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: white;
             text-align: center;
-            padding: 20px 10px;
-            font-size: 28px;
-            font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-    
-        .total-value {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-            color: #333;
-            padding: 10px 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 80%;
-            margin: 20px auto;
+
+        .sidebar-nav {
+            flex-grow: 1;
+            padding: 1rem 0;
         }
-    
-        .container {
+
+        .nav-list {
+            list-style: none;
+        }
+
+        .nav-item a {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            padding: 20px;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
         }
-    
-        .order-item {
-            background-color: #fff;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-            width: 300px;
-            margin: 10px;
-            text-align: left;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        .nav-item a:hover {
+            background-color: var(--sidebar-active-bg);
+            color: var(--sidebar-text-hover);
         }
-    
-        .order-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        
+        .nav-item a.active {
+            background-color: var(--sidebar-active-bg);
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
         }
-    
-        .order-item h3 {
-            color: #4A90E2;
-            margin-bottom: 10px;
-            font-size: 18px;
-            text-align: center;
+
+        .nav-item a svg {
+            width: 20px;
+            height: 20px;
         }
-    
-        .order-item p {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #555;
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-    
-        .back-button {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background-color:rgb(255, 0, 8);
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            transition: margin-left 0.3s ease-in-out;
+        }
+        
+        .main-header-bar {
+            background-color: var(--surface-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header-actions .logout-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            background-color: var(--danger-color);
             color: white;
             text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .header-actions .logout-button:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .content-body {
+            padding: 2rem;
+        }
+        
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* Orders Table */
+        .orders-container {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            overflow-x: auto; /* For responsiveness */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
             text-transform: uppercase;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s ease, transform 0.3s ease;
         }
-    
-        .back-button:hover {
-            background-color: green;
-            transform: scale(1.05);
+        
+        td {
+            font-size: 0.95rem;
         }
-    
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        /* Mobile Responsive */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .menu-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
         @media (max-width: 768px) {
-            .order-item {
-                width: 90%;
+            .sidebar {
+                transform: translateX(-100%);
             }
-    
-            .total-value {
-                font-size: 20px;
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            .main-header-bar {
+                padding-left: 4rem; /* Make space for menu toggle */
+            }
+            .menu-toggle {
+                display: block;
             }
         }
     </style>
-    
 </head>
 <body>
-    <header>Order Details</header>
 
-    <!-- Total Value Section -->
-    <div class="total-value">
-        Total Value of All Orders: ₹{{ total_value }}
-    </div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">ProdStore</div>
+        <nav class="sidebar-nav">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="{{ url_for('admin') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 10.707V17.5a1.5 1.5 0 01-1.5 1.5h-3.75a.75.75 0 01-.75-.75V14.5a.5.5 0 00-.5-.5h-1.5a.5.5 0 00-.5.5v3.75a.75.75 0 01-.75.75H4.5A1.5 1.5 0 013 17.5V10.707a1 1 0 01.293-.707l7-7z" clip-rule="evenodd" />
+                        </svg>
+                        Home
+                    </a>
+                    <a href="{{ url_for('admin_list_items') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
+                        Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_orders') }}" class="active">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 2A1.5 1.5 0 002 3.5v1.256a1.5 1.5 0 00.5 1.06l7.5 7.5-7.5 7.5A1.5 1.5 0 002 22.044V23.5A1.5 1.5 0 003.5 25h13A1.5 1.5 0 0018 23.5v-1.256a1.5 1.5 0 00-.5-1.06l-7.5-7.5 7.5-7.5A1.5 1.5 0 0018 4.756V3.5A1.5 1.5 0 0016.5 2h-13z" /></svg>
+                        Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_suggestions') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-1.707 1.707A1 1 0 003 15h14a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg>
+                        Suggestions
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p style="font-size: 0.8rem; text-align: center; color: var(--text-light);">© 2025 ProdStore</p>
+        </div>
+    </aside>
 
-    <div class="container">
-        {% if orders %}
-            {% for order in orders %}
-            <div class="order-item">
-                <h3>User ID: {{ order.user_id }}</h3>
-                <p><strong>Order Date:</strong> {{ order.order_date }}</p>
-                <p><strong>Total Price:</strong> ₹{{ order.total_price }}</p>
-                <p><strong>Ordered Items:</strong> {{ order.ordered_items }}</p>
+    <button class="menu-toggle" id="menu-toggle">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10zm0 5.25a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 01-.75-.75z" clip-rule="evenodd" /></svg>
+    </button>
+
+    <main class="main-content">
+        <header class="main-header-bar">
+            <div class="header-title">
+                <h1>Order Details</h1>
             </div>
-            {% endfor %}
-        {% else %}
-            <p>No orders found.</p>
-        {% endif %}
-    </div>
+            <div class="header-actions">
+                 <a href="{{ url_for('admin') }}" class="logout-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clip-rule="evenodd" /><path fill-rule="evenodd" d="M6 10a.75.75 0 01.75-.75h9.546l-1.048-.943a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 11-1.004-1.114l1.048-.943H6.75A.75.75 0 016 10z" clip-rule="evenodd" /></svg>
+                    Back
+                </a>
+            </div>
+        </header>
 
-    <a href="{{ url_for('admin') }}" class="back-button">Home</a>
+        <div class="content-body">
+            <!-- Summary Section -->
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-title">Total Orders</div>
+                    <div class="card-value">{{ orders|length }}</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Total Revenue</div>
+                    <div class="card-value">₹{{ total_value }}</div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="orders-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>User ID</th>
+                            <th>Order Date</th>
+                            <th>Items</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if orders %}
+                            {% for order in orders %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ order.user_id }}</td>
+                                <td>{{ order.order_date }}</td>
+                                <td>{{ order.ordered_items }}</td>
+                                <td>₹{{ order.total_price }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-light);">No orders found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+    </script>
 </body>
 </html>

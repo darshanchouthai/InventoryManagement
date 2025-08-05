@@ -574,6 +574,45 @@
                 right: 20px;
             }
         }
+        .order-items-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    background-color: var(--surface-color);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.order-item-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    margin-right: 12px;
+    object-fit: cover;
+}
+
+.order-item-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-item-name {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.order-item-quantity {
+    font-size: 0.85rem;
+    color: var(--text-color-light);
+}
 
     </style>
 </head>
@@ -595,19 +634,19 @@
         <ul class="category-list">
             <li>
                 <button onclick="filterByCategory('Fruits', this)">
-                    <img src="https://images.unsplash.com/photo-1571575295362-e91de7c7a01c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=80&q=80" alt="Fruits" class="category-icon">
+                    <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=80&q=80" alt="Fruits" class="category-icon">
                     <span>Fruits</span>
                 </button>
             </li>
             <li>
                 <button onclick="filterByCategory('Vegetables', this)">
-                    <img src="https://images.unsplash.com/photo-1590779277883-990700a497fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=80&q=80" alt="Vegetables" class="category-icon">
+                    <img src="https://images.pexels.com/photos/1300975/pexels-photo-1300975.jpeg?auto=compress&cs=tinysrgb&h=80&w=80" alt="Vegetables" class="category-icon">
                     <span>Vegetables</span>
                 </button>
             </li>
             <li>
                 <button onclick="filterByCategory('Dairy', this)">
-                    <img src="https://images.unsplash.com/photo-1628088062854-35f195d25275?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=80&q=80" alt="Dairy" class="category-icon">
+                    <img src="https://images.unsplash.com/photo-1620189507195-68309c04c4d0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=80&q=80" alt="Dairy" class="category-icon">
                     <span>Dairy</span>
                 </button>
             </li>
@@ -662,10 +701,20 @@
             {% if orders %}
                 {% for order in orders %}
                 <div class="order">
-                    <p><strong>Order Date:</strong> {{ order.order_date }}</p>
-                    <p><strong>Total Price:</strong> ₹{{ order.total_price }}</p>
-                    <p><strong>Items:</strong> {{ order.ordered_items }}</p>
+    <p><strong>Order Date:</strong> {{ order.order_date.strftime('%d %b %Y') }}</p>
+    <p><strong>Total Price:</strong> ₹{{ "%.2f"|format(order.total_price) }}</p>
+    <div class="order-items-list">
+        {% for item in order.ordered_items %}
+            <div class="order-item">
+                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="order-item-image">
+                <div class="order-item-details">
+                    <span class="order-item-name">{{ item.name }}</span>
+                    <span class="order-item-quantity">Quantity: {{ item.quantity }}</span>
                 </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
                 {% endfor %}
             {% else %}
                 <p>You haven't placed any orders yet.</p>

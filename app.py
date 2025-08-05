@@ -2,77 +2,109 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import mysql.connector
 from mysql.connector import Error
 import random
-import pymysql
+import string
+import smtplib
+from email.message import EmailMessage
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 import os
-
-
+import json
+# --- App Configuration ---
 app = Flask(__name__)
-app.secret_key = '41f4cfa3623d79af0b306d17f321d482'  # Replace with a secure key
+# IMPORTANT: This key should be a long, random, and secret string in a real application
+app.config['SECRET_KEY'] = '41f4cfa3623d79af0b306d17f321d482'
+s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 
-# Database Configuration
-import os
-
+# --- Database Configuration ---
 DB_CONFIG = {
-    'host': 'invmgmt.mysql.pythonanywhere-services.com',
-    'database': 'invmgmt$default',
-    'user': 'invmgmt',
-    'password': 'RcbChampions@2025'  # Change to your actual MySQL password
+    'host': 'localhost',
+    'database': 'inventorymanagementdb',
+    'user': 'root',
+    'password': 'Darshan@2003'  # Change to your actual MySQL password
 }
 
-# --- Helper Function ---
+# --- Email Credentials ---
+# IMPORTANT: Ensure this is a 16-character Google App Password
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 465
+EMAIL_ADDRESS = "darshanchouthai@gmail.com"
+EMAIL_PASSWORD = "equa rbrb gzow owbw"
+
+# --- Helper Functions ---
+
 def get_db_connection():
-    """Establish a database connection."""
+    """Establishes and returns a database connection."""
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
         return connection
     except Error as e:
-        print(f"Database Error: {e}")
+        print(f"Database Connection Error: {e}")
         return None
 
-# --- Routes ---
-# 1. Login Route
+def send_email(to_email, subject, content):
+    """Send an email using SMTP SSL (Gmail)."""
+    msg = EmailMessage()
+    msg.set_content(content)
+    msg['Subject'] = subject
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = to_email
+
+    try:
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, local_hostname="localhost") as server:
+            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            server.send_message(msg)
+            print("✅ Email sent successfully.")
+            return True
+    except smtplib.SMTPAuthenticationError:
+        print("❌ Authentication failed. Invalid email or app password.")
+    except smtplib.SMTPException as e:
+        print(f"❌ SMTP error: {e}")
+    except Exception as e:
+        print(f"❌ Other error: {e}")
+    return False
+
+
+# --- Main Routes ---
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    # Check for a success message from password reset or registration
+    success_message = request.args.get('success')
+    
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
+        if username == 'admin' and password == 'admin123':
+            session['role'] = 'admin'
+            return redirect(url_for('admin'))
+
         connection = get_db_connection()
-        if connection:
-            if username == 'admin' and password == 'admin123':
-                        session['role'] = 'admin'
-                        return redirect(url_for('admin'))
+        if not connection:
+            return render_template('login.html', error="Database connection error.")
+        
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT username, password FROM users WHERE username = %s AND password = %s", (username, password))
+            user = cursor.fetchone()
 
-            try:
-                cursor = connection.cursor(dictionary=True)
-
-                # Check if the user exists and validate the password
-                cursor.execute("SELECT username, password FROM users WHERE username = %s AND password = %s", (username, password))
-                user = cursor.fetchone()
-
-                if user:                  
-                    # User Login
-                    session['username'] = username
-                    session['role'] = 'user'
-                    return redirect(url_for('users'))
-                else:
-                    # Invalid username or password
-                    return render_template('login.html', error="Invalid username or password")
-
-            except Exception as e:
-                print(f"Error: {e}")
-                return render_template('login.html', error="An error occurred. Please try again.")
-            finally:
+            if user:
+                session['username'] = username
+                session['role'] = 'user'
+                return redirect(url_for('users'))
+            else:
+                return render_template('login.html', error="Invalid username or password.")
+        except Error as e:
+            print(f"Login Error: {e}")
+            return render_template('login.html', error="An error occurred. Please try again.")
+        finally:
+            if connection.is_connected():
                 cursor.close()
                 connection.close()
 
-        return render_template('login.html', error="Database connection error")
-
-    return render_template('login.html')
+    return render_template('login.html', success=success_message)
 
 
-# Registration Route with OTP Verification
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -81,46 +113,161 @@ def register():
         email = request.form['email']
         mobile = request.form['mobile']
 
-        # Validate inputs before sending to the database
-        if len(username.strip()) == 0:
-            return render_template('register.html', error="Username cannot be empty.")
+        # --- Input Validation ---
+        if not all([username.strip(), password, email, mobile]):
+            return render_template('register.html', error="All fields are required.")
         if len(password) < 8:
             return render_template('register.html', error="Password must be at least 8 characters long.")
         if '@' not in email:
             return render_template('register.html', error="Invalid email address.")
         if not mobile.isdigit() or len(mobile) < 10:
-            return render_template('register.html', error="Invalid mobile number. Must be numeric and at least 10 digits.")
+            return render_template('register.html', error="Invalid mobile number.")
 
-        connection = get_db_connection()
-        if connection:
-            try:
-                cursor = connection.cursor()
+        # --- Generate OTP and store data in session ---
+        otp = ''.join(random.choices(string.digits, k=6))
+        session['registration_data'] = {'username': username, 'password': password, 'email': email, 'mobile': mobile}
+        session['otp'] = otp
 
-                # Insert user into the database
-                cursor.execute(
-                    "INSERT INTO users (username, password, email, mobile) VALUES (%s, %s, %s, %s)",
-                    (username, password, email, mobile)
-                )
-                connection.commit()
-                return redirect(url_for('login'))
-            except pymysql.MySQLError as e:
-                # Map specific database errors to user-friendly messages
-                error_message = str(e)
-                if "Duplicate entry" in error_message and "for key 'username'" in error_message:
-                    return render_template('register.html', error="Username already exists.")
-                elif "Duplicate entry" in error_message and "for key 'mobile'" in error_message:
-                    return render_template('register.html', error="Mobile number already exists.")
-                elif "Password must be at least 8 characters long." in error_message:
-                    return render_template('register.html', error="Password must be at least 8 characters long.")
-                else:
-                    return render_template('register.html', error="Registration failed. Please try again.")
-            finally:
-                cursor.close()
-                connection.close()
-        else:
-            return render_template('register.html', error="Database connection failed.")
+        try:
+            subject = 'Your ProdStore Verification Code'
+            content = f'Hello {username},\n\nYour OTP for ProdStore registration is: {otp}\n\nThis OTP is valid for 10 minutes.\n\nThank you,\nThe ProdStore Team'
+            send_email(email, subject, content)
+            return redirect(url_for('verify_otp'))
+        except Exception as e:
+            print(f"Email sending failed during registration: {e}")
+            return render_template('register.html', error="Could not send verification email. Please try again.")
 
     return render_template('register.html')
+
+
+@app.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp():
+    if 'registration_data' not in session:
+        return redirect(url_for('register'))
+
+    if request.method == 'POST':
+        user_otp = request.form['otp']
+        if user_otp == session.get('otp'):
+            reg_data = session['registration_data']
+            
+            connection = get_db_connection()
+            if not connection:
+                return render_template('verify_otp.html', error="Database connection failed.")
+            
+            try:
+                cursor = connection.cursor()
+                cursor.execute(
+                    "INSERT INTO users (username, password, email, mobile) VALUES (%s, %s, %s, %s)",
+                    (reg_data['username'], reg_data['password'], reg_data['email'], reg_data['mobile'])
+                )
+                connection.commit()
+                session.pop('registration_data', None)
+                session.pop('otp', None)
+                return redirect(url_for('login', success="Registration successful! Please log in."))
+            
+            except mysql.connector.Error as e: # Corrected exception type
+                if e.errno == 1062: # Duplicate entry error code
+                    return render_template('verify_otp.html', error="An account with these details already exists.")
+                else:
+                    return render_template('verify_otp.html', error="Database error. Please try again.")
+            finally:
+                if connection.is_connected():
+                    cursor.close()
+                    connection.close()
+        else:
+            return render_template('verify_otp.html', error="Invalid OTP. Please try again.")
+
+    return render_template('verify_otp.html')
+
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form['email']
+        connection = get_db_connection()
+        if not connection:
+            return render_template('forgot_password.html', message="Error: Database connection failed.")
+
+        try:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
+            user = cursor.fetchone()
+
+            if user:
+                token = s.dumps(email, salt='password-reset-salt')
+                # Using relative URL
+                reset_url = url_for('reset_password', token=token, _external=True)
+
+                subject = 'Your ProdStore Password Reset Link'
+                content = f"""Hello,
+
+We received a request to reset your ProdStore account password.
+
+Please click the link below to reset your password:
+{reset_url}
+
+If you did not request this, please ignore this email.
+
+Thank you,
+The ProdStore Team
+"""
+                send_email(email, subject, content)
+                return render_template('forgot_password.html', message="✅ A password reset link has been sent to your email.")
+            else:
+                return render_template('forgot_password.html', message="❌ Email address not found.")
+        
+        except Error as e:
+            print(f"Forgot Password DB Error: {e}")
+            return render_template('forgot_password.html', message="❌ A database error occurred.")
+        except Exception as e:
+            print(f"Email sending failed during password reset: {e}")
+            return render_template('forgot_password.html', message="❌ Could not send email. Please try again later.")
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+    
+    return render_template('forgot_password.html')
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    try:
+        email = s.loads(token, salt='password-reset-salt', max_age=3600)
+    except (SignatureExpired, BadTimeSignature):
+        return "❌ The password reset link is invalid or has expired.", 400
+
+    if request.method == 'POST':
+        new_password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        if new_password != confirm_password:
+            return render_template('reset_password.html', token=token, error="❌ Passwords do not match.")
+        if len(new_password) < 8:
+            return render_template('reset_password.html', token=token, error="❌ Password must be at least 8 characters long.")
+
+        connection = get_db_connection()
+        if not connection:
+            return render_template('reset_password.html', token=token, error="❌ Database connection failed.")
+
+        try:
+            cursor = connection.cursor()
+            # No password hashing for now
+            cursor.execute("UPDATE users SET password = %s WHERE email = %s", (new_password, email))
+            connection.commit()
+            return redirect(url_for('login', success="✅ Your password has been reset successfully! Please log in."))
+        except Error as e:
+            print(f"Password update error: {e}")
+            return render_template('reset_password.html', token=token, error="❌ An error occurred. Please try again.")
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+    return render_template('reset_password.html', token=token)
+
+
+
 
 
 # 2. Admin Route - Admin Dashboard (Add, Remove, and Restock items)
@@ -314,8 +461,8 @@ def users():
         return redirect(url_for('login'))
 
     connection = get_db_connection()
-    items = []  # Product items
-    orders = []  # User orders
+    items = []      # Product items
+    orders = []     # This will hold the final, processed orders
     user_data = {"username": "Guest", "email": "-", "mobile": "-"}  # Default user data
 
     if connection:
@@ -337,21 +484,47 @@ def users():
                     "mobile": user['mobile']
                 }
 
-                # Fetch user's orders
-                cursor.execute("""
-                   SELECT o.order_date, 
-                          SUM(o.total_price) AS total_price, 
-                          GROUP_CONCAT(CONCAT(i.name, ' (', o.quantity, ')') SEPARATOR ', ') AS ordered_items
-                   FROM orders o
-                   JOIN items i ON o.item_id = i.id
-                   WHERE o.user_id = %s
-                   GROUP BY o.order_date
-                   ORDER BY o.order_date DESC
-                """, (username,))
-                orders = cursor.fetchall()
-                assert orders is not None, "Orders must be fetched without errors"
+                # --- MODIFIED SECTION TO FETCH AND PROCESS ORDERS ---
 
-            # Fetch product items
+                # 1. Fetch user's orders using the new query with JSON aggregation
+                cursor.execute("""
+                    SELECT 
+                        o.order_date, 
+                        SUM(o.total_price) AS total_price, 
+                        JSON_ARRAYAGG(
+                            JSON_OBJECT(
+                                'name', i.name, 
+                                'quantity', o.quantity, 
+                                'image_url', i.image_url
+                            )
+                        ) AS ordered_items
+                    FROM orders o
+                    JOIN items i ON o.item_id = i.id
+                    WHERE o.user_id = %s
+                    GROUP BY o.order_date
+                    ORDER BY o.order_date DESC
+                """, (username,))
+                
+                orders_from_db = cursor.fetchall()
+                assert orders_from_db is not None, "Orders must be fetched without errors"
+
+                # 2. Process the database results to parse the JSON string for each order
+                for order in orders_from_db:
+                    if order.get('ordered_items'):
+                        # The database returns a JSON string, so we parse it into a Python list
+                        items_json = order['ordered_items']
+                        if isinstance(items_json, bytes):
+                            items_json = items_json.decode('utf-8')
+                        
+                        order['ordered_items'] = json.loads(items_json)
+                    else:
+                        # Handle cases where an order might have no items
+                        order['ordered_items'] = []
+                    orders.append(order)
+                
+                # --- END OF MODIFIED SECTION ---
+
+            # Fetch all product items for the main page display
             cursor.execute("SELECT id, name, category, price, quantity, image_url FROM items")
             items = cursor.fetchall()
             assert items is not None, "Product items must be fetched without errors"
@@ -366,6 +539,7 @@ def users():
             cursor.close()
             connection.close()
 
+    # The processed 'orders' list (not 'orders_from_db') is passed to the template
     return render_template('user.html', items=items, orders=orders, user=user_data)
 
 from flask import jsonify
