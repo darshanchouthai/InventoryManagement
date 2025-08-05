@@ -871,18 +871,18 @@ def pull_and_reload():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
-        # Go to your project directory
-        project_path = "/home/invmgmt/InventoryManagement"
+        project_dir = "/home/invmgmt/InventoryManagement"
 
-        # Discard all local changes EXCEPT venv
-        os.system(f"cd {project_path} && git restore . && git clean -fd && git pull")
+        # Completely discard all local changes
+        os.system(f"cd {project_dir} && git fetch origin && git reset --hard origin/main && git clean -fd")
 
-        # Reload the app
+        # Reload the WSGI app
         os.system("touch /var/www/invmgmt_pythonanywhere_com_wsgi.py")
 
         return jsonify({"status": "success"})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "status": "failed"}), 500
+
 
 # 6. Logout Route
 @app.route('/logout')
