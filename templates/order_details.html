@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            font-family: Arial, sans-serif; 
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .page { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            background: #6a5acd;
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0 0 1rem 0;
+            font-size: 2rem;
+        }
+
+        .header-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-item label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .info-item value {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        /* Content Card */
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 2rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .section h2 {
+            margin: 0 0 1.5rem 0;
+            font-size: 1.3rem;
+            color: #6a5acd;
+        }
+
+        /* Items List */
+        .items-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+
+        .item-row img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .item-details h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .item-details p {
+            margin: 0.3rem 0 0 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .item-price {
+            font-weight: bold;
+            color: #6a5acd;
+            text-align: right;
+            min-width: 80px;
+        }
+
+        /* Total */
+        .total-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            padding: 1rem;
+            background: #6a5acd;
+            color: white;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        /* Payment Info */
+        .payment-info {
+            background: #f9f9f9;
+            padding: 1.5rem;
+            border-radius: 6px;
+        }
+
+        .payment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .payment-item label {
+            font-size: 0.85rem;
+            color: #666;
+            display: block;
+            margin-bottom: 0.3rem;
+            font-weight: bold;
+        }
+
+        .payment-item span {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        /* Buttons */
+        .buttons {
+            display: flex;
+            gap: 1.2rem;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-family: Arial, sans-serif;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6a5acd 0%, #7b6dd6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a4abd 0%, #6a5ac6 100%);
+            box-shadow: 0 6px 16px rgba(106, 90, 205, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #6a5acd;
+            border: 2.5px solid #6a5acd;
+        }
+
+        .btn-secondary:hover {
+            background: #6a5acd;
+            color: white;
+            box-shadow: 0 6px 16px rgba(106, 90, 205, 0.3);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .page { padding: 1rem; }
+            .header { padding: 1rem; }
+            .header h1 { font-size: 1.5rem; }
+            .card { padding: 1rem; }
+            .item-row { grid-template-columns: 50px 1fr auto; }
+            .buttons { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+
+        @media print {
+            .buttons { display: none; }
+            body { background: white; }
+            .card { box-shadow: none; border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- Header -->
+        <div class="header">
+            <h1>Order Details</h1>
+            <div class="header-info">
+                <div class="info-item">
+                    <label>Order Number</label>
+                    <value>#{{ order_ref }}</value>
+                </div>
+                <div class="info-item">
+                    <label>Date</label>
+                    <value>{{ order_date }}</value>
+                </div>
+                <div class="info-item">
+                    <label>Status</label>
+                    <value>✓ Confirmed</value>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="card">
+            <!-- Items Section -->
+            <div class="section">
+                <h2>Order Items</h2>
+                <div class="items-list">
+                    {% for item in items %}
+                    <div class="item-row">
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}" onerror="this.src='https://placehold.co/60x60/ddd/999?text=No+Img'">
+                        <div class="item-details">
+                            <h3>{{ item.name }}</h3>
+                            <p>Qty: {{ item.quantity }} × ₹{{ "%.2f"|format(item.price) }}</p>
+                        </div>
+                        <div class="item-price">₹{{ "%.2f"|format(item.price * item.quantity) }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="total-row">
+                    <span>Total:</span>
+                    <span>₹{{ "%.2f"|format(total) }}</span>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="section">
+                <h2>Payment Details</h2>
+                {% if payment %}
+                <div class="payment-info">
+                    <div class="payment-grid">
+                        <div class="payment-item">
+                            <label>Cardholder</label>
+                            <span>{{ payment.card_holder }}</span>
+                        </div>
+                        <div class="payment-item">
+                            <label>Card Number</label>
+                            <span>•••• •••• •••• {{ payment.card_last4 or '----' }}</span>
+                        </div>
+                        <div class="payment-item">
+                            <label>Expiry</label>
+                            <span>{{ payment.expiry or '-' }}</span>
+                        </div>
+                        <div class="payment-item">
+                            <label>Status</label>
+                            <span>✓ {{ payment.status }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p style="color: #666;">Payment details not available</p>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="buttons">
+                <a href="{{ url_for('users') }}" class="btn btn-primary">Back to Orders</a>
+                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Order</button>
+                <a href="{{ url_for('download_receipt') }}" class="btn btn-secondary">📥 Download Receipt</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

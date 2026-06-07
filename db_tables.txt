@@ -29,5 +29,20 @@ CREATE TABLE orders (
     quantity INT NOT NULL,
     price DECIMAL(10,2) NOT NULL,
     total_price DECIMAL(10,2) GENERATED ALWAYS AS (quantity * price) STORED,
-    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    order_ref VARCHAR(50) NOT NULL,
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (item_id) REFERENCES items(id)
+);
+
+CREATE TABLE payment_details (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    order_ref VARCHAR(50) NOT NULL UNIQUE,
+    user_id VARCHAR(50) NOT NULL,
+    card_holder VARCHAR(255),
+    card_last4 CHAR(4),
+    expiry VARCHAR(7),
+    billing_address TEXT,
+    status VARCHAR(50) DEFAULT 'Paid',
+    total_amount DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

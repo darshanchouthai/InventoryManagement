@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm OTP - ProdStore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6a5acd;
+            --primary-hover: #5a4bbf;
+            --success-color: #22c55e;
+            --text-dark: #111827;
+            --text-light: #6b7280;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--background); color: var(--text-dark); }
+        .page { max-width: 560px; margin: 0 auto; padding: 2rem; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 2rem; }
+        h1 { margin: 0 0 0.5rem; font-size: 2rem; }
+        p { color: var(--text-light); margin: 0 0 1.5rem; }
+        .field { margin-bottom: 1rem; }
+        .field label { display: block; margin-bottom: 0.5rem; color: var(--text-light); }
+        .field input { width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--border); font-size: 1rem; }
+        .button { width: 100%; border: none; border-radius: 12px; padding: 1rem; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .button:hover { background: var(--primary-hover); }
+        .payment-info { margin-bottom: 1.5rem; padding: 1rem; border-radius: 14px; background: #f8fafc; border: 1px solid var(--border); }
+        .payment-info strong { display: block; margin-top: 0.4rem; }
+        .error { color: #b91c1c; margin-bottom: 1rem; }
+        .hint { color: var(--text-light); font-size: 0.95rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="card">
+            <h1>Confirm OTP</h1>
+            <p>Enter the one-time password to confirm your payment.</p>
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+            <div class="payment-info">
+                <div>Card Holder: <strong>{{ payment_info.card_holder }}</strong></div>
+                <div>Card Ending: <strong>•••• {{ payment_info.card_last4 }}</strong></div>
+                <div>Expiry: <strong>{{ payment_info.expiry }}</strong></div>
+            </div>
+
+            <form method="POST">
+                <div class="field">
+                    <label for="otp">OTP</label>
+                    <input id="otp" name="otp" type="text" placeholder="424242" required>
+                </div>
+                <button class="button" type="submit">Complete Payment</button>
+            </form>
+            <p class="hint">This is a demo payment flow. Enter <strong>424242</strong> to continue.</p>
+        </div>
+    </div>
+</body>
+</html>

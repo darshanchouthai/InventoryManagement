@@ -198,6 +198,56 @@
             color: var(--text-light);
         }
 
+        select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background-color: white;
+            appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, var(--text-light) 50%),
+                              linear-gradient(135deg, var(--text-light) 50%, transparent 50%);
+            background-position: calc(100% - 1rem) calc(50% - 2px), calc(100% - 0.75rem) calc(50% - 2px);
+            background-size: 8px 8px;
+            background-repeat: no-repeat;
+            padding-right: 2.5rem;
+            color: var(--text-dark);
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(106, 90, 205, 0.2);
+        }
+
+        select::-ms-expand {
+            display: none;
+        }
+
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .category-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 0.9rem;
+            border-radius: 999px;
+            background-color: #eef2ff;
+            color: #4338ca;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+
         input {
             width: 100%;
             padding: 0.75rem 1rem;
@@ -354,7 +404,24 @@
                         <div class="form-group"><label for="name">Name:</label><input type="text" id="name" name="name" required></div>
                         <div class="form-group"><label for="price">Price:</label><input type="number" id="price" name="price" step="0.01" required></div>
                         <div class="form-group"><label for="quantity">Quantity:</label><input type="number" id="quantity" name="quantity" required></div>
-                        <div class="form-group"><label for="category">Category:</label><input type="text" id="category" name="category" required></div>
+                        <div class="form-group"><label for="category">Category:</label>
+                            <select id="category" name="category" required>
+                                <option value="">Select a category</option>
+                                <option value="Fruits">Fruits</option>
+                                <option value="Vegetables">Vegetables</option>
+                                <option value="Dairy">Dairy</option>
+                                <option value="Snacks">Snacks</option>
+                            </select>
+                        </div>
+                        <div class="form-group category-list">
+                            <label>Available Categories:</label>
+                            <div class="category-tags">
+                                <span class="category-tag">Fruits</span>
+                                <span class="category-tag">Vegetables</span>
+                                <span class="category-tag">Dairy</span>
+                                <span class="category-tag">Snacks</span>
+                            </div>
+                        </div>
                         <div class="form-group"><label for="image_url">Image URL:</label><input type="text" id="image_url" name="image_url"></div>
                         <button type="submit" class="submit-button add-button">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>

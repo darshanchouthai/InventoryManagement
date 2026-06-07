@@ -294,7 +294,7 @@
                     <span>Total</span>
                     <span>₹{{ "%.2f"|format(total) }}</span>
                 </div>
-                <form action="{{ url_for('checkout') }}" method="POST">
+                <form action="{{ url_for('payment') }}" method="GET">
                     <button type="submit" class="checkout-btn" {% if stock_error %}disabled{% endif %}>
                         Proceed to Checkout
                     </button>

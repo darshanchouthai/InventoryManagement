@@ -137,18 +137,23 @@
         .resend-link {
              margin-top: 1.5rem;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: var(--text-light);
         }
-        
-        .resend-link a {
+
+        .resend-link .resend-link-text {
             color: var(--primary-color);
-            font-weight: 500;
+            font-weight: 600;
             text-decoration: none;
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
         }
-        
-        .resend-link a:hover {
-            text-decoration: underline;
+
+        .resend-link .resend-link-text.disabled {
+            opacity: 0.6;
+            pointer-events: none;
         }
 
 
@@ -194,8 +199,56 @@
             </form>
             
             <div class="resend-link">
-                Didn't receive the email? <a href="{{ url_for('register') }}">Try registering again</a>.
+                Didn't receive the email? <a id="resend-otp" class="resend-link-text" role="button" href="javascript:void(0)">Resend OTP</a>
+                <span id="resend-status" style="margin-left:10px;color:var(--text-light);"></span>
             </div>
+            <script>
+                (function(){
+                    const btn = document.getElementById('resend-otp');
+                    const status = document.getElementById('resend-status');
+                    let cooldown = 0;
+
+                    function startCooldown(seconds){
+                        cooldown = seconds;
+                        btn.classList.add('disabled');
+                        const origText = btn.textContent;
+                        const interval = setInterval(()=>{
+                            if(cooldown <= 0){
+                                clearInterval(interval);
+                                btn.classList.remove('disabled');
+                                btn.textContent = origText;
+                                status.textContent = '';
+                                return;
+                            }
+                            btn.textContent = `Resend OTP (${cooldown}s)`;
+                            cooldown -= 1;
+                        }, 1000);
+                    }
+
+                    btn.addEventListener('click', async function(){
+                        if(btn.classList.contains('disabled')) return;
+                        status.textContent = 'Sending...';
+                        btn.classList.add('disabled');
+                        try{
+                            const res = await fetch('{{ url_for('resend_otp') }}', {method: 'POST', headers: {'Content-Type':'application/json'}});
+                            const data = await res.json();
+                            if(res.ok && data.success){
+                                status.style.color = 'green';
+                                status.textContent = 'OTP resent. Check your email.';
+                                startCooldown(30);
+                            } else {
+                                status.style.color = '#ef4444';
+                                status.textContent = data.message || 'Failed to resend OTP.';
+                                btn.classList.remove('disabled');
+                            }
+                        } catch(err){
+                            status.style.color = '#ef4444';
+                            status.textContent = 'Network error. Try again.';
+                            btn.classList.remove('disabled');
+                        }
+                    });
+                })();
+            </script>
         </div>
     </div>
 </body>

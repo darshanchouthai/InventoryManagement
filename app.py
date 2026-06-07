@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
+from werkzeug.security import generate_password_hash, check_password_hash
 import mysql.connector
-from mysql.connector import Error
+from mysql.connector import Error, errorcode
 import random
 import string
 import smtplib
@@ -8,6 +9,7 @@ from email.message import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignature
 import os
 import json
+from io import BytesIO
 # --- App Configuration ---
 app = Flask(__name__)
 # IMPORTANT: This key should be a long, random, and secret string in a real application
@@ -17,10 +19,10 @@ s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 # --- Database Configuration ---
 DB_CONFIG = {
-     'host': 'invmgmt.mysql.pythonanywhere-services.com',
-    'database': 'invmgmt$default',
-    'user': 'invmgmt',
-    'password': 'RcbChampions@2025'  # Change to your actual MySQL password
+     'host': 'localhost',
+    'database': 'Inventory_DB',
+    'user': 'root',
+    'password': 'Darshan@2003'  # Change to your actual MySQL password
 }
 
 # --- Email Credentials ---
@@ -28,7 +30,7 @@ DB_CONFIG = {
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 465
 EMAIL_ADDRESS = "darshanchouthai@gmail.com"
-EMAIL_PASSWORD = "equa rbrb gzow owbw"
+EMAIL_PASSWORD = "sokk odeq dbht enmm"
 
 # --- Helper Functions ---
 
@@ -40,6 +42,45 @@ def get_db_connection():
     except Error as e:
         print(f"Database Connection Error: {e}")
         return None
+
+
+def ensure_order_payment_schema(connection):
+    cursor = None
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SHOW COLUMNS FROM orders LIKE 'order_ref'")
+        if not cursor.fetchone():
+            print('Adding missing order_ref column to orders table.')
+            cursor.execute("ALTER TABLE orders ADD COLUMN order_ref VARCHAR(50) NOT NULL DEFAULT '' AFTER price")
+
+        cursor.execute("SHOW TABLES LIKE 'payment_details'")
+        if not cursor.fetchone():
+            print('Creating missing payment_details table.')
+            cursor.execute("""
+                CREATE TABLE payment_details (
+                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    order_ref VARCHAR(50) NOT NULL UNIQUE,
+                    user_id VARCHAR(50) NOT NULL,
+                    card_holder VARCHAR(255),
+                    card_last4 CHAR(4),
+                    expiry VARCHAR(7),
+                    billing_address TEXT,
+                    status VARCHAR(50) DEFAULT 'Paid',
+                    total_amount DECIMAL(10,2),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+        connection.commit()
+    except Error as e:
+        if e.errno == errorcode.ER_NO_SUCH_TABLE:
+            print(f'Schema check error: {e}')
+        else:
+            print(f'Schema check error: {e}')
+        connection.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+
 
 def send_email(to_email, subject, content):
     """Send an email using SMTP SSL (Gmail)."""
@@ -70,6 +111,8 @@ def send_email(to_email, subject, content):
 def login():
     # Check for a success message from password reset or registration
     success_message = request.args.get('success')
+    prefill_user = request.args.get('prefill_user')
+    prefill_pass = request.args.get('prefill_pass')
     
     if request.method == 'POST':
         username = request.form['username']
@@ -85,10 +128,10 @@ def login():
         
         try:
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT username, password FROM users WHERE username = %s AND password = %s", (username, password))
+            cursor.execute("SELECT password FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
 
-            if user:
+            if user and check_password_hash(user['password'], password):
                 session['username'] = username
                 session['role'] = 'user'
                 return redirect(url_for('users'))
@@ -102,7 +145,7 @@ def login():
                 cursor.close()
                 connection.close()
 
-    return render_template('login.html', success=success_message)
+    return render_template('login.html', success=success_message, prefill_user=prefill_user, prefill_pass=prefill_pass)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -127,15 +170,16 @@ def register():
         otp = ''.join(random.choices(string.digits, k=6))
         session['registration_data'] = {'username': username, 'password': password, 'email': email, 'mobile': mobile}
         session['otp'] = otp
-
         try:
             subject = 'Your ProdStore Verification Code'
             content = f'Hello {username},\n\nYour OTP for ProdStore registration is: {otp}\n\nThis OTP is valid for 10 minutes.\n\nThank you,\nThe ProdStore Team'
-            send_email(email, subject, content)
+            # Send email asynchronously so we can redirect immediately
+            import threading
+            threading.Thread(target=send_email, args=(email, subject, content), daemon=True).start()
             return redirect(url_for('verify_otp'))
         except Exception as e:
-            print(f"Email sending failed during registration: {e}")
-            return render_template('register.html', error="Could not send verification email. Please try again.")
+            print(f"Email thread start failed during registration: {e}")
+            return render_template('register.html', error="Could not initiate verification email. Please try again.")
 
     return render_template('register.html')
 
@@ -156,14 +200,20 @@ def verify_otp():
             
             try:
                 cursor = connection.cursor()
+                # Hash the password before storing
+                hashed_pw = generate_password_hash(reg_data['password'])
                 cursor.execute(
                     "INSERT INTO users (username, password, email, mobile) VALUES (%s, %s, %s, %s)",
-                    (reg_data['username'], reg_data['password'], reg_data['email'], reg_data['mobile'])
+                    (reg_data['username'], hashed_pw, reg_data['email'], reg_data['mobile'])
                 )
                 connection.commit()
+                # Keep credentials to prefill login, but remove registration state
+                reg_username = reg_data.get('username')
+                reg_password = reg_data.get('password')
                 session.pop('registration_data', None)
                 session.pop('otp', None)
-                return redirect(url_for('login', success="Registration successful! Please log in."))
+                # Redirect to login with success message and prefill params
+                return redirect(url_for('login', success="Registration successful! Please log in.", prefill_user=reg_username, prefill_pass=reg_password))
             
             except mysql.connector.Error as e: # Corrected exception type
                 if e.errno == 1062: # Duplicate entry error code
@@ -230,6 +280,30 @@ The ProdStore Team
     return render_template('forgot_password.html')
 
 
+@app.route('/resend_otp', methods=['POST'])
+def resend_otp():
+    # Resend OTP for ongoing registration stored in session
+    if 'registration_data' not in session:
+        return jsonify({'success': False, 'message': 'No registration in progress.'}), 400
+
+    try:
+        otp = ''.join(random.choices(string.digits, k=6))
+        session['otp'] = otp
+        reg = session['registration_data']
+        email = reg.get('email')
+        username = reg.get('username')
+        subject = 'Your ProdStore Verification Code'
+        content = f'Hello {username},\n\nYour OTP for ProdStore registration is: {otp}\n\nThis OTP is valid for 10 minutes.\n\nThank you,\nThe ProdStore Team'
+        sent = send_email(email, subject, content)
+        if sent:
+            return jsonify({'success': True, 'message': 'OTP resent successfully.'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to send email.'}), 500
+    except Exception as e:
+        print(f"Resend OTP error: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error.'}), 500
+
+
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     try:
@@ -252,8 +326,9 @@ def reset_password(token):
 
         try:
             cursor = connection.cursor()
-            # No password hashing for now
-            cursor.execute("UPDATE users SET password = %s WHERE email = %s", (new_password, email))
+            # Hash the new password before storing
+            hashed_new = generate_password_hash(new_password)
+            cursor.execute("UPDATE users SET password = %s WHERE email = %s", (hashed_new, email))
             connection.commit()
             return redirect(url_for('login', success="✅ Your password has been reset successfully! Please log in."))
         except Error as e:
@@ -489,6 +564,7 @@ def users():
                 # 1. Fetch user's orders using the new query with JSON aggregation
                 cursor.execute("""
                     SELECT 
+                        o.order_ref,
                         o.order_date, 
                         SUM(o.total_price) AS total_price, 
                         JSON_ARRAYAGG(
@@ -501,7 +577,7 @@ def users():
                     FROM orders o
                     JOIN items i ON o.item_id = i.id
                     WHERE o.user_id = %s
-                    GROUP BY o.order_date
+                    GROUP BY o.order_ref, o.order_date
                     ORDER BY o.order_date DESC
                 """, (username,))
                 
@@ -619,9 +695,52 @@ def chatbot():
 
             response["message"] = f"Total Amount Spent: ₹{total_spent['total_spent']}" if total_spent and total_spent['total_spent'] else "You have not spent anything yet."
 
+        elif user_message in ['order_details', 'view order details', 'last_order_details', 'order detail']:
+            cursor.execute("""
+                SELECT o.order_ref, o.order_date,
+                       MAX(o.total_price) AS total_price,
+                       GROUP_CONCAT(CONCAT(i.name, ' (', o.quantity, ')') SEPARATOR ', ') AS item_details
+                FROM orders o
+                JOIN items i ON o.item_id = i.id
+                WHERE o.user_id = %s
+                GROUP BY o.order_ref, o.order_date
+                ORDER BY o.order_date DESC
+                LIMIT 1
+            """, (username,))
+            last_order = cursor.fetchone()
+
+            if last_order:
+                cursor.execute("""
+                    SELECT card_holder, card_last4, expiry, billing_address, status
+                    FROM payment_details
+                    WHERE order_ref = %s AND user_id = %s
+                    LIMIT 1
+                """, (last_order['order_ref'], username))
+                payment_info = cursor.fetchone()
+                payment_text = ''
+                if payment_info:
+                    payment_text = (f"Payment: {payment_info['card_holder']} ••••{payment_info['card_last4']}\n"
+                                    f"Expiry: {payment_info['expiry']}\n"
+                                    f"Status: {payment_info['status']}")
+                response["message"] = (
+                    f"Last Order Details:\nRef: {last_order['order_ref']}\n"
+                    f"Date: {last_order['order_date']}\n"
+                    f"Total: ₹{last_order['total_price']}\n"
+                    f"Items: {last_order['item_details']}\n"
+                    f"{payment_text}"
+                )
+            else:
+                response["message"] = "You have no orders yet."
+
         elif user_message == 'other':
-            # Provide additional help options
-            response["message"] = "Here are additional options you can ask:\n- 'Last Order'\n- 'Last 5 Orders'\n- 'Total Amount Spent'\nPlease specify what you need help with!"
+            response["message"] = (
+                "Here are additional options you can ask:\n"
+                "- 'Last Order'\n"
+                "- 'Last 5 Orders'\n"
+                "- 'Total Amount Spent'\n"
+                "- 'Order Details'\n"
+                "Please specify what you need help with!"
+            )
 
     except Exception as e:
         # Handle unexpected errors and provide details for debugging
@@ -687,86 +806,343 @@ def add_to_cart():
 
     return jsonify({'message': 'Database error'}), 500
 
-from datetime import datetime
+from datetime import datetime, timedelta
+
+# --- Checkout Helpers ---
+
+def generate_order_reference():
+    return f"ORD{datetime.now().strftime('%Y%m%d%H%M%S')}{random.randint(100,999)}"
+
+
+def build_delivery_window():
+    start = datetime.now() + timedelta(days=2)
+    end = datetime.now() + timedelta(days=5)
+    return f"{start.strftime('%b %d')} - {end.strftime('%b %d')}"
+
+
+def fetch_recommended_items(cursor):
+    cursor.execute(
+        """
+        SELECT id, name, price, image_url
+        FROM items
+        WHERE quantity > 0
+        ORDER BY quantity DESC
+        LIMIT 3
+        """
+    )
+    return cursor.fetchall()
+
+
+def complete_checkout(username, order_ref, order_date, payment_info=None):
+    connection = get_db_connection()
+    if not connection:
+        return {'success': False, 'error': 'Database connection failed.'}
+
+    ensure_order_payment_schema(connection)
+
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(""" 
+            SELECT c.item_id, c.quantity, i.name, i.price, i.image_url 
+            FROM cart c 
+            JOIN items i ON c.item_id = i.id
+            WHERE c.user_id = %s
+        """, (username,))
+        cart_items = cursor.fetchall()
+
+        if not cart_items:
+            return {'success': False, 'error': 'Cart is empty, cannot checkout.'}
+
+        for item in cart_items:
+            item_id = item['item_id']
+            quantity = item['quantity']
+            price = item['price']
+
+            cursor.execute(
+                "UPDATE items SET quantity = quantity - %s WHERE id = %s AND quantity >= %s",
+                (quantity, item_id, quantity)
+            )
+            if cursor.rowcount == 0:
+                connection.rollback()
+                return {'success': False, 'error': f'Insufficient stock for item {item_id}.'}
+
+            cursor.execute("""
+                INSERT INTO orders (user_id, item_id, quantity, price, order_ref, order_date)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (username, item_id, quantity, price, order_ref, order_date))
+
+        total_price = sum(item['quantity'] * item['price'] for item in cart_items)
+
+        if payment_info is not None:
+            card_holder = payment_info.get('card_holder')
+            card_last4 = payment_info.get('card_last4')
+            expiry = payment_info.get('expiry')
+            billing_address = payment_info.get('billing_address')
+            status = 'Paid'
+        else:
+            card_holder = 'Direct Checkout'
+            card_last4 = None
+            expiry = None
+            billing_address = None
+            status = 'Paid'
+
+        cursor.execute("""
+            INSERT INTO payment_details (order_ref, user_id, card_holder, card_last4, expiry, billing_address, status, total_amount)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (order_ref, username, card_holder, card_last4, expiry, billing_address, status, total_price))
+
+        cursor.execute("DELETE FROM cart WHERE user_id = %s", (username,))
+        connection.commit()
+
+        delivery_window = build_delivery_window()
+        recommended_items = fetch_recommended_items(cursor)
+
+        return {
+            'success': True,
+            'cart_items': cart_items,
+            'total': total_price,
+            'delivery_window': delivery_window,
+            'recommended_items': recommended_items,
+            'order_ref': order_ref,
+            'order_date': order_date
+        }
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        return {'success': False, 'error': str(e)}
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
 
 @app.route('/checkout', methods=['POST'])
 def checkout():
-    print("Processing Checkout...")
-    print("Session data:", session)
-
-    username = session.get('username')  # Fetch username from session
-
+    username = session.get('username')
     if not username:
-        print("User is not logged in.")
         return redirect(url_for('login'))
 
-    connection = get_db_connection()
+    order_ref = generate_order_reference()
+    order_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    result = complete_checkout(username, order_ref, order_date)
 
+    if not result['success']:
+        return jsonify({'message': result.get('error', 'Error during checkout')}), 400
+
+    session['last_order'] = {
+        'username': username,
+        'order_ref': result['order_ref'],
+        'order_date': result['order_date'],
+        'total': result['total'],
+        'delivery_window': result['delivery_window'],
+        'cart': result['cart_items']
+    }
+
+    return render_template(
+        'success.html',
+        cart=result['cart_items'],
+        total=result['total'],
+        username=username,
+        order_ref=result['order_ref'],
+        order_date=result['order_date'],
+        delivery_window=result['delivery_window'],
+        recommended_items=result['recommended_items']
+    )
+
+
+@app.route('/payment', methods=['GET', 'POST'])
+def payment():
+    if 'role' not in session or session['role'] != 'user':
+        return redirect(url_for('login'))
+
+    username = session['username']
+    error = None
+    cart_items = []
+    total = 0
+    stock_error = False
+
+    if request.method == 'POST':
+        card_holder = request.form.get('card_holder', '').strip()
+        card_number = request.form.get('card_number', '').strip()
+        expiry = request.form.get('expiry', '').strip()
+        cvv = request.form.get('cvv', '').strip()
+        billing_address = request.form.get('billing_address', '').strip()
+
+        if not card_holder or not card_number or not expiry or not cvv:
+            error = 'Please complete all payment fields before continuing.'
+        else:
+            session['payment_info'] = {
+                'card_holder': card_holder,
+                'card_last4': card_number[-4:],
+                'expiry': expiry,
+                'billing_address': billing_address
+            }
+            session['checkout_order_ref'] = generate_order_reference()
+            session['checkout_order_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            return redirect(url_for('payment_otp'))
+
+    connection = get_db_connection()
     if connection:
         try:
             cursor = connection.cursor(dictionary=True)
-
-            # Fetch all cart items for the user, including image URLs
-            cursor.execute(""" 
-                SELECT c.item_id, c.quantity, i.name, i.price, i.image_url 
-                FROM cart c 
+            cursor.execute("""
+                SELECT c.item_id, i.name, i.quantity AS stock, i.image_url, i.price, c.quantity AS cart_quantity 
+                FROM cart c
                 JOIN items i ON c.item_id = i.id
                 WHERE c.user_id = %s
             """, (username,))
             cart_items = cursor.fetchall()
 
-            if not cart_items:
-                print("Cart is empty.")
-                return jsonify({'message': 'Cart is empty, cannot checkout'}), 400
-
-            print("Cart Items: ", cart_items)
-
-            # Process each cart item
             for item in cart_items:
-                item_id = item['item_id']
-                quantity = item['quantity']
-                price = item['price']
-
-                print(f"Processing item {item_id} with quantity {quantity}.")
-
-                # Update stock
-                cursor.execute(
-                    "UPDATE items SET quantity = quantity - %s WHERE id = %s AND quantity >= %s",
-                    (quantity, item_id, quantity)
-                )
-                if cursor.rowcount == 0:
-                    print(f"Insufficient stock for item {item_id}.")
-                    connection.rollback()
-                    return jsonify({'message': f"Insufficient stock for item {item_id}"}), 400
-
-                # Add to orders table using `username` for user_id
-                order_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                cursor.execute("""
-                    INSERT INTO orders (user_id, item_id, quantity, price, order_date)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (username, item_id, quantity, price, order_date))
-
-            # Clear the cart
-            cursor.execute("DELETE FROM cart WHERE user_id = %s", (username,))
-            connection.commit()
-
-            # Calculate total price for the success page
-            total_price = sum(item['quantity'] * item['price'] for item in cart_items)
-
-            print("Checkout completed successfully.")
-            return render_template('success.html', cart=cart_items, total=total_price, username=username)
-
-        except Exception as e:
-            print(f"Error during checkout: {e}")
-            connection.rollback()
-            return jsonify({'message': 'Error during checkout'}), 500
-
+                if item['cart_quantity'] > item['stock']:
+                    item['stock_error'] = True
+                    stock_error = True
+                else:
+                    item['stock_error'] = False
+                total += item['price'] * item['cart_quantity']
         finally:
             cursor.close()
             connection.close()
 
-    print("Database connection error.")
-    return jsonify({'message': 'Database error during checkout'}), 500
+    return render_template('payment.html', cart=cart_items, total=total, stock_error=stock_error, error=error)
+
+
+@app.route('/payment_otp', methods=['GET', 'POST'])
+def payment_otp():
+    if 'role' not in session or session['role'] != 'user':
+        return redirect(url_for('login'))
+
+    payment_info = session.get('payment_info')
+    if not payment_info:
+        return redirect(url_for('payment'))
+
+    error = None
+    if request.method == 'POST':
+        otp = request.form.get('otp', '').strip()
+        if otp != '424242':
+            error = 'Invalid OTP. Please enter 424242 to complete the payment.'
+        else:
+            username = session['username']
+            order_ref = session.get('checkout_order_ref', generate_order_reference())
+            order_date = session.get('checkout_order_date', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            result = complete_checkout(username, order_ref, order_date, payment_info)
+
+            if not result['success']:
+                return render_template('payment_otp.html', payment_info=payment_info, error=result.get('error', 'Payment failed.'))
+
+            session['last_order'] = {
+                'username': username,
+                'order_ref': result['order_ref'],
+                'order_date': result['order_date'],
+                'total': result['total'],
+                'delivery_window': result['delivery_window'],
+                'cart': result['cart_items']
+            }
+            session.pop('payment_info', None)
+            session.pop('checkout_order_ref', None)
+            session.pop('checkout_order_date', None)
+
+            return render_template(
+                'success.html',
+                cart=result['cart_items'],
+                total=result['total'],
+                username=username,
+                order_ref=result['order_ref'],
+                order_date=result['order_date'],
+                delivery_window=result['delivery_window'],
+                recommended_items=result['recommended_items']
+            )
+
+    return render_template('payment_otp.html', payment_info=payment_info, error=error)
+
+
+@app.route('/order_details/<order_ref>')
+def order_details(order_ref):
+    if 'role' not in session or session['role'] != 'user':
+        return redirect(url_for('login'))
+
+    username = session['username']
+    connection = get_db_connection()
+    if not connection:
+        return render_template('error.html', message='Database connection failed.')
+
+    ensure_order_payment_schema(connection)
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT o.item_id, o.quantity, o.price, i.name, i.image_url, o.order_date
+            FROM orders o
+            JOIN items i ON o.item_id = i.id
+            WHERE o.order_ref = %s AND o.user_id = %s
+        """, (order_ref, username))
+        items = cursor.fetchall()
+
+        if not items:
+            return render_template('error.html', message='Order not found or access denied.')
+
+        order_date = items[0]['order_date']
+        total = sum(item['quantity'] * item['price'] for item in items)
+
+        cursor.execute("""
+            SELECT card_holder, card_last4, expiry, billing_address, status, total_amount, created_at
+            FROM payment_details
+            WHERE order_ref = %s AND user_id = %s
+            LIMIT 1
+        """, (order_ref, username))
+        payment = cursor.fetchone()
+
+        return render_template(
+            'order_details.html',
+            order_ref=order_ref,
+            order_date=order_date,
+            items=items,
+            total=total,
+            payment=payment
+        )
+    except Exception as e:
+        return render_template('error.html', message=f'Unable to load order details: {e}')
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+@app.route('/download_receipt')
+def download_receipt():
+    last_order = session.get('last_order')
+    if not last_order:
+        return redirect(url_for('users'))
+
+    receipt_lines = [
+        'Order Receipt',
+        f"Order Number: {last_order['order_ref']}",
+        f"Order Date: {last_order['order_date']}",
+        f"Customer: {last_order['username']}",
+        '',
+        'Items:'
+    ]
+
+    for item in last_order['cart']:
+        price = float(item['price'])
+        quantity = int(item['quantity'])
+        receipt_lines.append(f"- {item['name']} x{quantity} @ ₹{price:.2f} = ₹{quantity * price:.2f}")
+
+    receipt_lines.extend([
+        '',
+        f"Total: ₹{float(last_order['total']):.2f}",
+        f"Delivery Window: {last_order['delivery_window']}",
+        '',
+        'Thank you for shopping with us!'
+    ])
+
+    receipt_data = '\n'.join(receipt_lines)
+    buffer = BytesIO(receipt_data.encode('utf-8'))
+    buffer.seek(0)
+    return send_file(buffer, mimetype='text/plain', as_attachment=True, download_name=f"receipt_{last_order['order_ref']}.txt")
 
 # 5. Cart Route
 

@@ -95,6 +95,94 @@
             border-bottom: 1px solid var(--border-color);
         }
 
+        .order-meta {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .meta-card {
+            background: #f3f4f6;
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .back-button.outline {
+            background: transparent;
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+        }
+
+        .back-button.outline:hover {
+            background-color: #eef2ff;
+            color: var(--primary-color);
+        }
+
+        .recommended-section {
+            margin-top: 2.5rem;
+            text-align: left;
+        }
+
+        .recommended-section h2 {
+            margin-bottom: 1rem;
+        }
+
+        .recommended-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .recommended-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: left;
+        }
+
+        .recommended-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 0.9rem;
+        }
+
+        .recommended-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .recommended-name {
+            font-weight: 600;
+        }
+
+        .recommended-price {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
         .order-item {
             display: flex;
             align-items: center;
@@ -167,6 +255,21 @@
             <h1>Order Successful!</h1>
             <p>Thank you, {{ username }}. Your order has been placed and is being processed.</p>
             
+            <div class="order-meta">
+                <div class="meta-card">
+                    <span class="meta-label">Order Number</span>
+                    <strong>{{ order_ref }}</strong>
+                </div>
+                <div class="meta-card">
+                    <span class="meta-label">Order Date</span>
+                    <strong>{{ order_date }}</strong>
+                </div>
+                <div class="meta-card">
+                    <span class="meta-label">Delivery Window</span>
+                    <strong>{{ delivery_window }}</strong>
+                </div>
+            </div>
+
             <div class="order-details">
                 <h2>Order Summary</h2>
                 {% for item in cart %}
@@ -182,7 +285,28 @@
                 <div class="order-total">Total: ₹{{ "%.2f"|format(total) }}</div>
             </div>
 
-            <a href="{{ url_for('users') }}" class="back-button">Back to Shopping</a>
+            <div class="cta-buttons">
+                <a href="{{ url_for('users') }}#orders" class="back-button outline">Back to Home</a>
+                <a href="{{ url_for('users') }}" class="back-button">Continue Shopping</a>
+                <a href="{{ url_for('download_receipt') }}" class="back-button outline">Download Receipt</a>
+            </div>
+
+            {% if recommended_items %}
+            <div class="recommended-section">
+                <h2>You may also like</h2>
+                <div class="recommended-grid">
+                    {% for item in recommended_items %}
+                    <div class="recommended-card">
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}" onerror="this.src='https://placehold.co/120x120/e2e8f0/6b7280?text=No+Img'">
+                        <div class="recommended-details">
+                            <span class="recommended-name">{{ item.name }}</span>
+                            <span class="recommended-price">₹{{ "%.2f"|format(item.price) }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </body>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Details - ProdStore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6a5acd;
+            --primary-hover: #5a4bbf;
+            --text-dark: #111827;
+            --text-light: #6b7280;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--background); color: var(--text-dark); }
+        .page { max-width: 960px; margin: 0 auto; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .header h1 { font-size: 2rem; margin: 0; }
+        .note { color: var(--text-light); font-size: 0.95rem; }
+        .layout { display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; }
+        .card, .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 1.5rem; }
+        .card h2, .summary-card h2 { margin-top: 0; font-size: 1.2rem; }
+        .field { margin-bottom: 1rem; }
+        .field label { display: block; margin-bottom: 0.5rem; color: var(--text-light); }
+        .field input, .field textarea { width: 100%; padding: 0.95rem 1rem; border: 1px solid var(--border); border-radius: 12px; font-size: 1rem; }
+        .field textarea { min-height: 100px; resize: vertical; }
+        .button { display: inline-flex; align-items: center; justify-content: center; width: 100%; background: var(--primary-color); color: white; border: none; border-radius: 12px; padding: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, background 0.2s; }
+        .button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .error { color: #b91c1c; margin-bottom: 1rem; }
+        .cart-summary { display: grid; gap: 0.9rem; }
+        .summary-item { display: flex; justify-content: space-between; color: var(--text-dark); }
+        .summary-item.total { font-weight: 700; font-size: 1.1rem; }
+        .tip { margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; color: var(--text-light); font-size: 0.95rem; }
+        @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div>
+                <h1>Payment Details</h1>
+                <p class="note">Enter your payment information to continue. This is a dummy checkout, OTP is always <strong>424242</strong>.</p>
+            </div>
+        </div>
+        <div class="layout">
+            <div class="card">
+                {% if error %}
+                <div class="error">{{ error }}</div>
+                {% endif %}
+                <h2>Card Information</h2>
+                <form id="payment-form" method="POST">
+                    <div class="field">
+                        <label for="card_holder">Cardholder Name</label>
+                        <input id="card_holder" name="card_holder" type="text" placeholder="John Doe" required>
+                    </div>
+                    <div class="field">
+                        <label for="card_number">Card Number</label>
+                        <input id="card_number" name="card_number" type="text" placeholder="1234 5678 9012 3456" required>
+                    </div>
+                    <div class="field">
+                        <label for="expiry">Expiry Date</label>
+                        <input id="expiry" name="expiry" type="text" placeholder="MM/YY" required>
+                    </div>
+                    <div class="field">
+                        <label for="cvv">CVV</label>
+                        <input id="cvv" name="cvv" type="text" placeholder="123" required>
+                    </div>
+                    <div class="field">
+                        <label for="billing_address">Billing Address</label>
+                        <textarea id="billing_address" name="billing_address" placeholder="123 Main Street, City, Country"></textarea>
+                    </div>
+                    <button id="payment-submit" type="submit" class="button">Continue to OTP</button>
+                </form>
+                <p class="tip">Note: This checkout only simulates payment. Use any card number and enter OTP <strong>424242</strong> on the next screen.</p>
+            </div>
+            <div class="summary-card">
+                <h2>Order Summary</h2>
+                <div class="cart-summary">
+                    {% if cart %}
+                        {% for item in cart %}
+                        <div class="summary-item">
+                            <span>{{ item.name }} × {{ item.cart_quantity }}</span>
+                            <span>₹{{ "%.2f"|format(item.price * item.cart_quantity) }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="note">Your cart is empty or cannot be loaded.</p>
+                    {% endif %}
+                    <div class="summary-item total">
+                        <span>Total</span>
+                        <span>₹{{ "%.2f"|format(total) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('payment-form');
+            const submitButton = document.getElementById('payment-submit');
+
+            if (form && submitButton) {
+                form.addEventListener('submit', function() {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Redirecting to OTP...';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
